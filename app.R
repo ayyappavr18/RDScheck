@@ -1,5 +1,3 @@
-
-
 library(shinythemes)
 library(ggplot2)
 library(ggmosaic)
@@ -7,9 +5,9 @@ library(productplots)
 library(plotly)
 library(summarytools)
 library(MASS) 
-library(car)
+#library(car)
 library(expss)
-library(labelled)
+#library(labelled)
 # function
 # missing value recode Na's
 replace.empty <- function(a) {
@@ -34,7 +32,7 @@ library("dplyr")
 library("ggplot2")
 library("tidyr")
 library("gridExtra")
-library(naniar)
+#library(naniar)
 library(shiny)
 library(epiDisplay)
 library(epiR)
@@ -56,9 +54,9 @@ options(knitr.table.format = function(){ if (knitr::is_latex_output()) "latex" e
 library(summarytools)
 library(dplyr) 
 library(ggplot2)
-library(ggpubr)
+#library(ggpubr)
 library(reshape2)
-theme_set(theme_pubclean())
+#theme_set(theme_pubclean())
 library(shinythemes)
 #------
 ui = navbarPage(theme = shinytheme("flatly"),"ANTENATAL",
