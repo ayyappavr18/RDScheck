@@ -5,9 +5,10 @@ library(productplots)
 library(plotly)
 library(summarytools)
 library(MASS) 
-#library(car)
+library(car)
 library(expss)
-#library(labelled)
+library(labelled)
+library(lubridate)
 # function
 # missing value recode Na's
 replace.empty <- function(a) {
@@ -32,7 +33,7 @@ library("dplyr")
 library("ggplot2")
 library("tidyr")
 library("gridExtra")
-#library(naniar)
+library(naniar)
 library(shiny)
 library(epiDisplay)
 library(epiR)
@@ -54,9 +55,9 @@ options(knitr.table.format = function(){ if (knitr::is_latex_output()) "latex" e
 library(summarytools)
 library(dplyr) 
 library(ggplot2)
-#library(ggpubr)
+library(ggpubr)
 library(reshape2)
-#theme_set(theme_pubclean())
+theme_set(theme_pubclean())
 library(shinythemes)
 #------
 ui = navbarPage(theme = shinytheme("flatly"),"ANTENATAL",
@@ -100,7 +101,7 @@ ui = navbarPage(theme = shinytheme("flatly"),"ANTENATAL",
                                                            #        h5("CREATE LABEL"),verbatimTextOutput('recodesuary1'),div(style="display:inline-block",uiOutput("colname_in4"),width=3),div(style="display:inline-block",uiOutput("colname_in5"),width=3),div(style="display:inline-block",uiOutput("colname_in6"),width=3),div(style="display:inline-block",actionButton("RenamelevelsColumn","Label"),width=3),verbatimTextOutput("labelsummary")),
                                                          )
                                                ),
-                                               tabPanel( h5("RECODE CATEGORICAL VARIABLE"),div(style="display:inline-block",uiOutput("recodeui1"),width=3),uiOutput("recodeui01"),div(style="display:inline-block",actionButton("cateadd","Add Variable"),width=3),uiOutput("recodeui001"),h5("Categorical variable : 'PGE1'='PGE'; 'PGE2'='PGE'"),actionButton("recodeok01","Recode"),verbatimTextOutput('cutsummary'),verbatimTextOutput('cutsummary1')), 
+                                               tabPanel( h5("RECODE CATEGORICAL VARIABLE"),div(style="display:inline-block",uiOutput("recodeui1"),width=3),uiOutput("recodeui01"),div(style="display:inline-block",actionButton("cateadd","Add Variable"),width=3),uiOutput("recodeui001"),h5("Categorical variable : 'PGE1'='PGE'; 'PGE2'='PGE'"),h5("Categorical variable : 1=1; 2=2; else=3"),actionButton("recodeok01","Recode"),verbatimTextOutput('cutsummary'),verbatimTextOutput('cutsummary1')), 
                                                tabPanel( h5("LABEL"),
                                                          fluidRow(
                                                            column(width = 5,
@@ -380,37 +381,45 @@ server = function(input, output,session) {
   #----select variable class changes------
   output$colname_in1 <- renderUI({
     selectInput("class", "Choose variable type",
-                choices = c(" ", "factor", "numeric", "integer", "character","Date"),
+                choices = c(" ", "factor", "numeric", "integer", "character","Date(y-m-d)",
+                            "Date(d-m-y)"),
                 selected = " ")
   })
   
   observeEvent(input$change_class, {
     
-    v$data <- eval(parse(text = paste0('v$data %>% mutate(',
-                                       input$colname,
-                                       ' = as.',
-                                       input$class,
-                                       '(',
-                                       input$colname,
-                                       '))')
-    )
-    )
+    # v$data <- eval(parse(text = paste0('v$data %>% mutate(',
+    #                                    input$colname,
+    #                                    ' = as.',
+    #                                    input$class,
+    #                                    '(',
+    #                                    input$colname,
+    #                                    '))')
+    # )
+    # )
     
-    # req(v$data[,input$colname],input$class)
-    # if(input$class=="factor"){
-    #   v$data[,input$colname]<-as.factor( v$data[,input$colname])
-    # } else if (input$class=="integer") {
-    #   v$data[,input$colname]<-as.integer( v$data[,input$colname]) 
-    # } else if (input$class=="character") {
-    #   v$data[,input$colname]<-as.character( v$data[,input$colname]) 
-    # } else if (input$class=="numeric") {
-    #   v$data[,input$colname]<-as.numeric( v$data[,input$colname]) 
-    # } else if (input$class=="Date") {
-    #   v$data[,input$colname]<-as.Date( v$data[,input$colname],format = "%d-%m-%y") 
+    req(v$data[,input$colname],input$class)
+    if(input$class=="factor"){
+      v$data[,input$colname]<-as.factor( v$data[,input$colname])
+    } else if (input$class=="integer") {
+      v$data[,input$colname]<-as.integer( v$data[,input$colname])
+    } else if (input$class=="character") {
+      v$data[,input$colname]<-as.character( v$data[,input$colname])
+    } else if (input$class=="numeric") {
+      v$data[,input$colname]<-as.numeric( v$data[,input$colname])
+    } else if (input$class=="Date(y-m-d)") {
+      v$data[,input$colname]<-ymd(v$data[,input$colname])
+    }
+    else if (input$class=="Date(d-m-y)") {
+      v$data[,input$colname]<-dmy( v$data[,input$colname])
+    }
+    # else if (input$class=="Date(y/m/d)") {
+    #   v$data[,input$colname]<-as.Date( v$data[,input$colname])
     # }
-    #  else if (input$class=="Date1") {
-    #   v$data[,input$colname]<-as.numeric( v$data[,input$colname],format = "%y-%m-%d") 
+    # else if (input$class=="Date(d/m/d)") {
+    #   v$data[,input$colname]<-as.Date( v$data[,input$colname],format="%d/%m/%Y")
     # }
+    
   })
   #---rename select ui------
   output$colname_in2<-renderUI({
@@ -564,7 +573,7 @@ server = function(input, output,session) {
     selectInput(inputId = "breakvariable01",
                 label = "Choose variable",
                 multiple = T,
-                choices = c(colnames(v$data)))
+                choices = c(colnames(Filter(is.factor,v$data))) )
   })
   
   output$recodeui01<-renderUI({
@@ -591,7 +600,7 @@ server = function(input, output,session) {
   
   observeEvent(input$cateadd, {
     output$cutsummary<-renderPrint({
-      levels(v$data[,input$catevariable])
+      table(v$data[,input$catevariable])
     })
   })
   
@@ -602,8 +611,8 @@ server = function(input, output,session) {
     selectInput(inputId = "recodeselectvariable1",
                 label = "Choose variable",
                 multiple = T,
-                choices = c(colnames(v$data)),
-                selected = "AGE")
+                choices = c(colnames(Filter(is.numeric,v$data))),
+                selected = "")
   })
   output$renewvari<-renderUI({
     textInput(inputId = "entervariablename", 
@@ -871,7 +880,8 @@ server = function(input, output,session) {
     selectInput("variable53", "Secondary indication(df3):",df53)
   })
   
-  #--outlier variable---------selectui
+  
+  #-----outlier variable---------selectui
   output$select5 <- renderUI({
     df5 <- colnames(Filter(is.numeric,v$data))
     selectInput("outliervariable", "choose variable:",df5)
